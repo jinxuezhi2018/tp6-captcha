@@ -1,6 +1,6 @@
 {
     "name": "xuezhitech/tp6-captcha",
-    "description": "captcha package for thinkphp",
+    "description": "captcha package for thinkphp6",
     "authors": [
         {
             "name": "xuezhitech",
@@ -9,11 +9,11 @@
     ],
     "license": "Apache-2.0",
     "require": {
-        "topthink/framework": "^6.0.0"
+        "topthink/framework": "^6.*"
     },
     "autoload": {
         "psr-4": {
-            "think\\captcha\\": "src/"
+            "xuezhitech\\captcha\\": "src/"
         }
     }
 }
