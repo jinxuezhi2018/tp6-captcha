@@ -106,7 +106,7 @@ class Captcha
             }
         }
         // session 过期
-        if ( (time() - $captcha_info['verify_time']) > $this->config['expire']) {
+        if ( (time() - $captcha_info['verify_time']) > $this->expire ) {
             Cache::rm($key);
             return false;
         }
@@ -125,23 +125,23 @@ class Captcha
      * @param bool        $api
      * @return Response
      */
-    public function create(bool $debug=false): Response
+    public function create(bool $debug=false): array
     {
         //创建key及验证码
         $generator = $this->generate();
 
         // 图片宽(px)
-        $this->config['imageW'] || $this->config['imageW'] = $this->config['length'] * $this->config['fontSize'] * 1.5 + $this->config['length'] * $this->config['fontSize'] / 2;
+        $this->imageW || $this->imageW = $this->length * $this->fontSize * 1.5 + $this->length * $this->fontSize / 2;
         // 图片高(px)
-        $this->config['imageH'] || $this->config['imageH'] = $this->config['fontSize'] * 2.5;
+        $this->imageH || $this->imageH = $this->fontSize * 2.5;
 
-        $this->config['imageW'] = intval($this->config['imageW']);
-        $this->config['imageH'] = intval($this->config['imageH']);
+        $this->imageW = intval($this->imageW);
+        $this->imageH = intval($this->imageH);
 
         // 建立一幅 $this->imageW x $this->imageH 的图像
-        $this->im = imagecreate((int) $this->config['imageW'], (int) $this->config['imageH']);
+        $this->im = imagecreate((int) $this->imageW, (int) $this->imageH);
         // 设置背景
-        imagecolorallocate($this->im, $this->config['bg'][0], $this->config['bg'][1], $this->config['bg'][2]);
+        imagecolorallocate($this->im, $this->bg[0], $this->bg[1], $this->bg[2]);
 
         // 验证码字体随机颜色
         $this->color = imagecolorallocate($this->im, mt_rand(1, 150), mt_rand(1, 150), mt_rand(1, 150));
@@ -177,13 +177,13 @@ class Captcha
         }
 
         // 绘验证码
-        $text = $this->useZh ? preg_split('/(?<!^)(?!$)/u', $generator['value']) : str_split($generator['value']); // 验证码
+        $text = str_split($generator['verify']['verify_code']); // 验证码
 
         foreach ($text as $index => $char) {
 
-            $x     = $this->fontSize * ($index + 1) * ($this->math ? 1 : 1.5);
+            $x     = $this->fontSize * ($index + 1) * 1.5;
             $y     = $this->fontSize + mt_rand(10, 20);
-            $angle = $this->math ? 0 : mt_rand(-40, 40);
+            $angle = mt_rand(-40, 40);
 
             imagettftext($this->im, intval($this->fontSize), intval($this->fontSize), intval($x), intval($y), $this->color, $fontttf, $char);
         }
@@ -195,7 +195,12 @@ class Captcha
         imagedestroy($this->im);
         $content = 'data:image/png;base64,'.base64_encode($content);
         if ( $debug===true ){
-            return ['captcha_key'=>$generator['key'],'src'=>$content,'verify_code'=>$generator['verify_code'],'verify_time'=>date('Y-m-d H:i:s',$generator['verify_time'])];
+            return [
+                'captcha_key'=>$generator['key'],
+                'src'=>$content,
+                'verify_code'=>$generator['verify']['verify_code'],
+                'verify_time'=>$generator['verify']['verify_time']
+            ];
         }else{
             return ['captcha_key'=>$generator['key'],'src'=>$content];
         }
@@ -273,7 +278,7 @@ class Captcha
             $noiseColor = imagecolorallocate($this->im, mt_rand(150, 225), mt_rand(150, 225), mt_rand(150, 225));
             for ($j = 0; $j < 5; $j++) {
                 // 绘杂点
-                imagestring($this->im, 5, mt_rand(-10, $this->config['imageW']), mt_rand(-10, $this->config['imageH']), $codeSet[mt_rand(0, 29)], $noiseColor);
+                imagestring($this->im, 5, mt_rand(-10, $this->config['imageW']), mt_rand(-10, $this->config['imageH']), $codeSet[mt_rand(0,22)], $noiseColor);
             }
         }
     }
@@ -312,9 +317,16 @@ class Captcha
     protected function generate(): array
     {
         $key  = md5(uniqid()); //生成key
+        $verify_code = ''; //生成codes
+        //随机生成code
+        $characters = str_split($this->codeSet);
+        for ($i = 0; $i < $this->length; $i++) {
+            $verify_code .= $characters[rand(0, count($characters) - 1)];
+        }
+        $verify_code = mb_strtolower($verify_code, 'UTF-8');
         //生成verify信息
         $verify = [
-            'verify_code'=>password_hash($key, PASSWORD_BCRYPT), //生成code
+            'verify_code'=>$verify_code, //生成code
             'verify_time'=>time(), //生成code
         ];
         //保存到cache中
@@ -325,5 +337,4 @@ class Captcha
             'key'   => $key,
         ];
     }
-
 }
