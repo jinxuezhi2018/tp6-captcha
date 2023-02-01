@@ -225,19 +225,19 @@ class Captcha
         $px = $py = 0;
 
         // 曲线前部分
-        $A = mt_rand(1, $this->config['imageH'] / 2); // 振幅
-        $b = mt_rand(intval(-$this->config['imageH'] / 4), intval($this->config['imageH'] / 4)); // Y轴方向偏移量
-        $f = mt_rand(intval(-$this->config['imageH'] / 4), intval($this->config['imageH'] / 4)); // X轴方向偏移量
-        $T = mt_rand($this->config['imageH'], $this->config['imageW'] * 2); // 周期
+        $A = mt_rand(1, $this->imageH / 2); // 振幅
+        $b = mt_rand(intval(-$this->imageH / 4), intval($this->imageH / 4)); // Y轴方向偏移量
+        $f = mt_rand(intval(-$this->imageH / 4), intval($this->imageH / 4)); // X轴方向偏移量
+        $T = mt_rand($this->imageH, $this->imageW * 2); // 周期
         $w = (2 * M_PI) / $T;
 
         $px1 = 0; // 曲线横坐标起始位置
-        $px2 = mt_rand($this->config['imageW'] / 2, $this->config['imageW'] * 0.8); // 曲线横坐标结束位置
+        $px2 = mt_rand($this->imageW / 2, $this->imageW * 0.8); // 曲线横坐标结束位置
 
         for ($px = $px1; $px <= $px2; $px = $px + 1) {
             if (0 != $w) {
-                $py = $A * sin($w * $px + $f) + $b + $this->config['imageH'] / 2; // y = Asin(ωx+φ) + b
-                $i  = (int) ($this->config['fontSize'] / 5);
+                $py = $A * sin($w * $px + $f) + $b + $this->imageH / 2; // y = Asin(ωx+φ) + b
+                $i  = (int) ($this->fontSize / 5);
                 while ($i > 0) {
                     imagesetpixel($this->im, intval($px + $i), intval($py + $i), $this->color); // 这里(while)循环画像素点比imagettftext和imagestring用字体大小一次画出（不用这while循环）性能要好很多
                     $i--;
@@ -278,7 +278,7 @@ class Captcha
             $noiseColor = imagecolorallocate($this->im, mt_rand(150, 225), mt_rand(150, 225), mt_rand(150, 225));
             for ($j = 0; $j < 5; $j++) {
                 // 绘杂点
-                imagestring($this->im, 5, mt_rand(-10, $this->config['imageW']), mt_rand(-10, $this->config['imageH']), $codeSet[mt_rand(0,22)], $noiseColor);
+                imagestring($this->im, 5, mt_rand(-10, $this->imageW), mt_rand(-10, $this->imageH), $codeSet[mt_rand(0,22)], $noiseColor);
             }
         }
     }
@@ -305,7 +305,7 @@ class Captcha
         list($width, $height) = @getimagesize($gb);
         // Resample
         $bgImage = @imagecreatefromjpeg($gb);
-        @imagecopyresampled($this->im, $bgImage, 0, 0, 0, 0, $this->config['imageW'], $this->config['imageH'], $width, $height);
+        @imagecopyresampled($this->im, $bgImage, 0, 0, 0, 0, $this->imageW, $this->imageH, $width, $height);
         @imagedestroy($bgImage);
     }
 
@@ -330,7 +330,7 @@ class Captcha
             'verify_time'=>time(), //生成code
         ];
         //保存到cache中
-        Cache::set($key,$verify,$this->config['expire']);
+        Cache::set($key,$verify,$this->expire);
 
         return [
             'verify' => $verify,
