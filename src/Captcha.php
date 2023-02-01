@@ -97,7 +97,7 @@ class Captcha
     public function check(string $key,string $code): bool
     {
         // 验证码不能为空
-        if ( empty($key) ){
+        if ( empty($key) || empty($code) ){
             return false;
         }else{
             $captcha_info = Cache::get($key);
@@ -107,14 +107,15 @@ class Captcha
         }
         // session 过期
         if ( (time() - $captcha_info['verify_time']) > $this->expire ) {
-            Cache::rm($key);
+            Cache::delete($key);
             return false;
         }
-        $res = password_verify($code,$captcha_info['verify_code']);
-        if ( $res ) {
-            Cache::rm($key);
+        // code是否相等
+        if ( $code==$captcha_info['verify_code'] ) {
+            Cache::delete($key);
             return true;
         }
+
         return false;
     }
 
